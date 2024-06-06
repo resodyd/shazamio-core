@@ -132,13 +132,13 @@ jobs:
         with:
           name: wheels
 
-      - name: Publish to PyPI
-        uses: PyO3/maturin-action@v1
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        with:
-          command: upload
-          args: --skip-existing dist/*
+#      - name: Publish to PyPI
+#        uses: PyO3/maturin-action@v1
+#        env:
+#          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+#        with:
+#          command: upload
+#          args: --skip-existing dist/*
 
       - name: Attach Artifacts to the release
         uses: softprops/action-gh-release@v1
@@ -146,4 +146,4 @@ jobs:
           files: |
             dist/*.whl
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
