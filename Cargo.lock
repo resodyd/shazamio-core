@@ -1528,6 +1528,7 @@ dependencies = [
  "chfft",
  "crc32fast",
  "futures",
+ "libc",
  "pyo3",
  "pyo3-asyncio",
  "rodio",

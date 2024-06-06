@@ -1,13 +1,15 @@
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufReader, Write};
-
+use std::io::Cursor;
+use std::os::unix::process::CommandExt;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-
-use rodio::Decoder;
-use std::io::Cursor;
 use std::process::Command;
+
+// Required for pre_exec
+use libc::setsid;
+use rodio::Decoder;
 use tempfile::Builder;
 
 /// This function used to decode a file with FFMpeg, if it is installed on
@@ -66,19 +68,30 @@ pub fn decode_with_ffmpeg(file_path: &str) -> Option<Decoder<BufReader<File>>> {
 
         let command = command.args(["-y", "-i", file_path, sink_file_path.to_str().unwrap()]);
 
-        // Set "CREATE_NO_WINDOW" on Windows, see
-        // https://stackoverflow.com/a/60958956/662399
+        #[cfg(unix)]
+        unsafe {
+            let command = command.pre_exec(|| {
+                // Call setsid to create a new session
+                if setsid() == -1 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
 
-        if let Ok(process) = command.output() {
-            if process.status.success() {
-                let res = Decoder::new(BufReader::new(
-                    File::open(sink_file_path.to_str().unwrap()).unwrap(),
-                ))
-                .expect("failed to decode with ffmpeg");
-                return Some(res);
+            // Set "CREATE_NO_WINDOW" on Windows, see
+            // https://stackoverflow.com/a/60958956/662399
+
+            if let Ok(process) = command.output() {
+                if process.status.success() {
+                    let res = Decoder::new(BufReader::new(
+                        File::open(sink_file_path.to_str().unwrap()).unwrap(),
+                    ))
+                        .expect("failed to decode with ffmpeg");
+                    return Some(res);
+                }
+            } else {
+                return None;
             }
-        } else {
-            return None;
         }
     }
     None
@@ -126,16 +139,27 @@ pub fn decode_with_ffmpeg_from_bytes(
         let command = command.creation_flags(0x08000000);
         let command = command.args(["-y", "-i", &file_path, &sink_file_path]);
 
-        if let Ok(process) = command.output() {
-            if process.status.success() {
-                // Read the converted file into a Vec<u8>
-                let converted_bytes = std::fs::read(sink_file_path)?;
+        #[cfg(unix)]
+        unsafe {
+            let command = command.pre_exec(|| {
+                // Call setsid to create a new session
+                if setsid() == -1 {
+                    return Err(std::io::Error::last_os_error());
+                }
+                Ok(())
+            });
 
-                // Create a Cursor around the converted bytes and create a Decoder
-                let cursor = Cursor::new(converted_bytes);
-                let decoder = Decoder::new(cursor)?;
+            if let Ok(process) = command.output() {
+                if process.status.success() {
+                    // Read the converted file into a Vec<u8>
+                    let converted_bytes = std::fs::read(sink_file_path)?;
 
-                return Ok(decoder);
+                    // Create a Cursor around the converted bytes and create a Decoder
+                    let cursor = Cursor::new(converted_bytes);
+                    let decoder = Decoder::new(cursor)?;
+
+                    return Ok(decoder);
+                }
             }
         }
     }
