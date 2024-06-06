@@ -66,11 +66,9 @@ pub fn decode_with_ffmpeg(file_path: &str) -> Option<Decoder<BufReader<File>>> {
         #[cfg(windows)]
         let command = command.creation_flags(0x08000000);
 
-        let command = command.args(["-y", "-i", file_path, sink_file_path.to_str().unwrap()]);
-
         #[cfg(unix)]
         unsafe {
-            let command = command.pre_exec(|| {
+            let command = command.args(["-y", "-i", file_path, sink_file_path.to_str().unwrap()]).pre_exec(|| {
                 // Call setsid to create a new session
                 if setsid() == -1 {
                     return Err(std::io::Error::last_os_error());
@@ -137,11 +135,10 @@ pub fn decode_with_ffmpeg_from_bytes(
         let mut command = Command::new(ffmpeg_path);
         #[cfg(windows)]
         let command = command.creation_flags(0x08000000);
-        let command = command.args(["-y", "-i", &file_path, &sink_file_path]);
 
         #[cfg(unix)]
         unsafe {
-            let command = command.pre_exec(|| {
+            let command = command.args(["-y", "-i", &file_path, &sink_file_path]).pre_exec(|| {
                 // Call setsid to create a new session
                 if setsid() == -1 {
                     return Err(std::io::Error::last_os_error());
