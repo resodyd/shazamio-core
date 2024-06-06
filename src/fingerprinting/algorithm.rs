@@ -28,6 +28,7 @@ impl SignatureGenerator {
             // Use the original bytes vector here
             decode_with_ffmpeg_from_bytes(&bytes)
         })?;
+        drop(bytes);
 
         // Convert the decoded samples to 16 kHz mono PCM, similar to make_signature_from_file
         // Here, we use UniformSourceIterator from rodio to downsample and convert to mono if necessary
@@ -46,6 +47,7 @@ impl SignatureGenerator {
         // Generate signature from buffer
         let signature =
             SignatureGenerator::make_signature_from_buffer(raw_pcm_samples_slice.to_vec());
+        drop(raw_pcm_samples);
 
         // Return the generated signature
         Ok(signature)
@@ -85,6 +87,7 @@ impl SignatureGenerator {
         let b = &raw_pcm_samples_slice[..slice_len];
         // unsafe { backtrace_on_stack_overflow::enable() };
         let res = SignatureGenerator::make_signature_from_buffer(b.to_vec());
+        drop(raw_pcm_samples);
         Ok(res)
     }
 
@@ -122,6 +125,7 @@ impl SignatureGenerator {
                 this.do_peak_recognition();
             }
         }
+        drop(s16_mono_16khz_buffer);
 
         this.signature
     }
