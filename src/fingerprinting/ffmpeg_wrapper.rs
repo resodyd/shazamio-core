@@ -58,12 +58,13 @@ pub fn decode_with_ffmpeg(file_path: &str) -> Option<Decoder<BufReader<File>>> {
         // .WAV s16le PCM file using FFMpeg, and pass it to Rodio
         // later in the case where it succeeded
 
+        let command_str = format!("setsid {} -y -i {} {}", ffmpeg_path, file_path, sink_file_path.to_str().unwrap());
         let mut command = Command::new("sh");
 
         #[cfg(windows)]
         let command = command.creation_flags(0x08000000);
 
-        let command = command.args(["-c", "'setsid", ffmpeg_path, "-y", "-i", file_path, sink_file_path.to_str().unwrap(), "'"]);
+        let command = command.arg("-c").arg(&command_str);
 
         // Set "CREATE_NO_WINDOW" on Windows, see
         // https://stackoverflow.com/a/60958956/662399
@@ -120,11 +121,11 @@ pub fn decode_with_ffmpeg_from_bytes(
         let sink_file_path = sink_file.path().to_str().unwrap().to_string();
 
         // Convert to WAV format
+        let command_str = format!("setsid {} -y -i {} {}", ffmpeg_path, &file_path, &sink_file_path);
         let mut command = Command::new("sh");
         #[cfg(windows)]
         let command = command.creation_flags(0x08000000);
-
-        let command = command.args(["-c", "'setsid", ffmpeg_path, "-y", "-i", &file_path, &sink_file_path, "'"]);
+        let command = command.arg("-c").arg(&command_str);
 
         if let Ok(process) = command.output() {
             if process.status.success() {

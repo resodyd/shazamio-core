@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shazamio_core"
-version = "2.3"
+version = "2.4"
 description = ""
 authors = ["dotX12 <dev@shitposting.team>"]
 readme = "README.md"
