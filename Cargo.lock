@@ -1519,7 +1519,7 @@ dependencies = [
 
 [[package]]
 name = "shazamio-core"
-version = "1.0.7"
+version = "2.3.0"
 dependencies = [
  "base64",
  "blocking",
@@ -1528,7 +1528,6 @@ dependencies = [
  "chfft",
  "crc32fast",
  "futures",
- "libc",
  "pyo3",
  "pyo3-asyncio",
  "rodio",
